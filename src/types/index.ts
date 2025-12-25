@@ -2,24 +2,24 @@ export interface AuthUser {
   id: number;
   username: string;
   email: string;
-  role: 'admin' | 'editor';
+  role: "admin" | "editor";
 }
 
 export interface JWTPayload {
   userId: number;
   username: string;
   email: string;
-  role: 'admin' | 'editor';
+  role: "admin" | "editor";
 }
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
   errors?: string[];
 }
 
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
   success: boolean;
   data: T[];
   pagination: {

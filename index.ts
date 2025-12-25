@@ -1,5 +1,5 @@
-import router from './src/routes';
-import type { APIResponse } from './src/types';
+import router from "./src/routes";
+import type { APIResponse } from "./src/types";
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
@@ -18,29 +18,29 @@ Bun.serve({
         return new Response(
           JSON.stringify({
             success: false,
-            message: 'Route not found',
+            message: "Route not found",
           } satisfies APIResponse),
           {
             status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }
+            headers: { "Content-Type": "application/json" },
+          },
         );
       }
 
       console.log(`Response: ${response.status} for ${request.url}`);
       return response;
-    } catch (error: any) {
-      console.error('Server error:', error);
+    } catch (error) {
+      console.error("Server error:", error);
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Internal server error',
-          errors: [error.message],
+          message: "Internal server error",
+          errors: [error instanceof Error ? error.message : String(error)],
         }),
         {
           status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
   },

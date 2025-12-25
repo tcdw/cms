@@ -1,25 +1,26 @@
-import type { IRequest } from 'itty-router';
-import type { AuthUser } from '../types';
-import { extractTokenFromHeader, verifyToken } from '../utils/auth';
+import type { IRequest } from "itty-router";
+
+import type { AuthUser } from "../types";
+import { extractTokenFromHeader, verifyToken } from "../utils/auth";
 
 export interface AuthenticatedRequest extends IRequest {
   user?: AuthUser;
 }
 
 export async function authMiddleware(request: AuthenticatedRequest): Promise<Response | undefined> {
-  const authHeader = request.headers.get('Authorization');
+  const authHeader = request.headers.get("Authorization");
   const token = extractTokenFromHeader(authHeader);
 
   if (!token) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Access token required',
+        message: "Access token required",
       }),
       {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 
@@ -28,12 +29,12 @@ export async function authMiddleware(request: AuthenticatedRequest): Promise<Res
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Invalid or expired token',
+        message: "Invalid or expired token",
       }),
       {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 
@@ -50,25 +51,25 @@ export async function adminMiddleware(request: AuthenticatedRequest): Promise<Re
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Authentication required',
+        message: "Authentication required",
       }),
       {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 
-  if (request.user.role !== 'admin') {
+  if (request.user.role !== "admin") {
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Admin access required',
+        message: "Admin access required",
       }),
       {
         status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 }

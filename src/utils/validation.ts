@@ -17,7 +17,7 @@ export function validateSlug(slug: string): boolean {
 }
 
 export function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<script[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+  const scriptRegex = /<script[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+  const iframeRegex = /<iframe[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi;
+  return html.replace(scriptRegex, "").replace(iframeRegex, "");
 }

@@ -1,24 +1,21 @@
-import { drizzle } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
-import { createClient } from '@libsql/client';
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 
 async function main() {
-  const client = createClient({
-    url: process.env.DATABASE_URL || 'file:./cms.db',
-    authToken: process.env.DATABASE_AUTH_TOKEN,
-  });
+  const dbPath = (process.env.DATABASE_URL || "file:./cms.db").replace("file:", "");
+  const sqlite = new Database(dbPath);
+  const db = drizzle(sqlite);
 
-  const db = drizzle(client);
+  console.log("Running migrations...");
+  migrate(db, { migrationsFolder: "./drizzle" });
+  console.log("Migrations completed!");
 
-  console.log('Running migrations...');
-  await migrate(db, { migrationsFolder: './drizzle' });
-  console.log('Migrations completed!');
-
-  await client.close();
+  sqlite.close();
   process.exit(0);
 }
 
-main().catch((error) => {
-  console.error('Migration failed:', error);
+main().catch(error => {
+  console.error("Migration failed:", error);
   process.exit(1);
 });

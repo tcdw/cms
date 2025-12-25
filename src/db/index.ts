@@ -1,12 +1,11 @@
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
-import * as schema from './schema';
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 
-const client = createClient({
-  url: process.env.DATABASE_URL || 'file:./cms.db',
-  authToken: process.env.DATABASE_AUTH_TOKEN,
-});
+import * as schema from "./schema";
 
-export const db = drizzle(client, { schema });
+const dbPath = (process.env.DATABASE_URL || "file:./cms.db").replace("file:", "");
+const sqlite = new Database(dbPath);
 
-export * from './schema';
+export const db = drizzle(sqlite, { schema });
+
+export * from "./schema";

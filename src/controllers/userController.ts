@@ -1,11 +1,11 @@
-import type { IRequest } from 'itty-router';
-import { z } from 'zod';
-import { db } from '../db';
-import { users } from '../db/schema';
-import { eq } from 'drizzle-orm';
-import { hashPassword, verifyPassword } from '../utils/auth';
-import type { AuthenticatedRequest } from '../middleware/auth';
-import type { APIResponse } from '../types';
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+
+import { db } from "../db";
+import { users } from "../db/schema";
+import type { AuthenticatedRequest } from "../middleware/auth";
+import type { APIResponse } from "../types";
+import { hashPassword, verifyPassword } from "../utils/auth";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -18,39 +18,37 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Authentication required',
+          message: "Authentication required",
         } satisfies APIResponse),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
 
     const body = await request.json();
     const { currentPassword, newPassword } = changePasswordSchema.parse(body);
 
-    const [user] = await db.select()
-      .from(users)
-      .where(eq(users.id, request.user.id))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.id, request.user.id)).limit(1);
 
     if (!user || !(await verifyPassword(currentPassword, user.password))) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Current password is incorrect',
+          message: "Current password is incorrect",
         } satisfies APIResponse),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
 
     const hashedNewPassword = await hashPassword(newPassword);
 
-    await db.update(users)
+    await db
+      .update(users)
       .set({
         password: hashedNewPassword,
         updatedAt: new Date(),
@@ -60,40 +58,40 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Password changed successfully',
+        message: "Password changed successfully",
       } satisfies APIResponse),
       {
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
-  } catch (error: any) {
+  } catch (error) {
     // Check for ZodError by constructor name to handle cross-instance issues
     // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
-      const issues = error.issues || error.errors || [];
+    if (error instanceof z.ZodError) {
+      const issues = error.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Validation error',
-          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
+          message: "Validation error",
+          errors: issues.map(e => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
 
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Internal server error',
-        errors: [error.message],
+        message: "Internal server error",
+        errors: [error instanceof Error ? error.message : String(error)],
       } satisfies APIResponse),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 }
@@ -104,23 +102,24 @@ export async function getProfile(request: AuthenticatedRequest): Promise<Respons
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Authentication required',
+          message: "Authentication required",
         } satisfies APIResponse),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
 
-    const [user] = await db.select({
-      id: users.id,
-      username: users.username,
-      email: users.email,
-      role: users.role,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-    })
+    const [user] = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        role: users.role,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
       .from(users)
       .where(eq(users.id, request.user.id))
       .limit(1);
@@ -129,36 +128,36 @@ export async function getProfile(request: AuthenticatedRequest): Promise<Respons
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'User not found',
+          message: "User not found",
         } satisfies APIResponse),
         {
           status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
+          headers: { "Content-Type": "application/json" },
+        },
       );
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Profile retrieved successfully',
+        message: "Profile retrieved successfully",
         data: user,
       } satisfies APIResponse),
       {
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
-  } catch (error: any) {
+  } catch (error) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Internal server error',
-        errors: [error.message],
+        message: "Internal server error",
+        errors: [error instanceof Error ? error.message : String(error)],
       } satisfies APIResponse),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 }

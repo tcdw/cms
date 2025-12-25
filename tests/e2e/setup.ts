@@ -3,13 +3,12 @@
  * 提供测试数据库、服务器启动和清理工具
  */
 
-import { db } from '../../src/db';
-import { users, posts, categories, postCategories } from '../../src/db/schema';
-import { hashPassword } from '../../src/utils/auth';
-import type { APIResponse } from '../../src/types';
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
+import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
+
+import { users } from "../../src/db/schema";
+import type { APIResponse } from "../../src/types";
+import { hashPassword } from "../../src/utils/auth";
 
 // 测试环境配置
 export const TEST_PORT = 3001;
@@ -17,40 +16,40 @@ export const TEST_BASE_URL = `http://localhost:${TEST_PORT}`;
 
 // 创建测试数据库连接
 export function getTestDb() {
-  const client = createClient({
-    url: 'file:./test.db',
-  });
-  return drizzle(client, { schema: require('../../src/db/schema') });
+  const sqlite = new Database("./test.db");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return drizzle(sqlite, { schema: require("../../src/db/schema") });
 }
 
 // 运行数据库迁移
 export async function runMigrations(): Promise<void> {
   try {
-    const testDb = getTestDb();
-    // 使用 drizzle-kit 执行迁移
-    const { execSync } = require('child_process');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { execSync } = require("node:child_process");
 
     // 确保 migrations 目录存在
-    const fs = require('fs');
-    const path = require('path');
-    const migrationsDir = path.join(process.cwd(), 'drizzle');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require("node:fs");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require("node:path");
+    const migrationsDir = path.join(process.cwd(), "drizzle");
 
     if (!fs.existsSync(migrationsDir)) {
-      console.log('⚠️  No migrations directory found, creating tables manually...');
+      console.log("⚠️  No migrations directory found, creating tables manually...");
       // 手动创建表（用于测试环境）
       await createTablesManually();
       return;
     }
 
-    console.log('🔄 Running database migrations...');
+    console.log("🔄 Running database migrations...");
     // 执行 drizzle-kit migrate
-    execSync('bun run db:migrate', {
-      env: { ...process.env, DATABASE_URL: 'file:./test.db' },
-      stdio: 'inherit'
+    execSync("bun run db:migrate", {
+      env: { ...process.env, DATABASE_URL: "file:./test.db" },
+      stdio: "inherit",
     });
-    console.log('✅ Database migrations completed');
+    console.log("✅ Database migrations completed");
   } catch (error) {
-    console.warn('⚠️  Migration warning:', error);
+    console.warn("⚠️  Migration warning:", error);
     // 如果迁移失败，手动创建表
     await createTablesManually();
   }
@@ -58,11 +57,11 @@ export async function runMigrations(): Promise<void> {
 
 // 手动创建表（用于测试环境）
 async function createTablesManually(): Promise<void> {
-  const testDb = getTestDb();
+  const sqlite = new Database("./test.db");
 
   try {
     // 创建 users 表
-    await testDb.run(`
+    sqlite.run(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -75,7 +74,7 @@ async function createTablesManually(): Promise<void> {
     `);
 
     // 创建 categories 表
-    await testDb.run(`
+    sqlite.run(`
       CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
@@ -87,7 +86,7 @@ async function createTablesManually(): Promise<void> {
     `);
 
     // 创建 posts 表
-    await testDb.run(`
+    sqlite.run(`
       CREATE TABLE IF NOT EXISTS posts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -104,7 +103,7 @@ async function createTablesManually(): Promise<void> {
     `);
 
     // 创建 post_categories 表
-    await testDb.run(`
+    sqlite.run(`
       CREATE TABLE IF NOT EXISTS post_categories (
         post_id INTEGER NOT NULL,
         category_id INTEGER NOT NULL,
@@ -114,9 +113,10 @@ async function createTablesManually(): Promise<void> {
       )
     `);
 
-    console.log('✅ Tables created manually');
+    sqlite.close();
+    console.log("✅ Tables created manually");
   } catch (error) {
-    console.warn('⚠️  Table creation warning:', error);
+    console.warn("⚠️  Table creation warning:", error);
   }
 }
 
@@ -127,15 +127,15 @@ export async function startTestServer(): Promise<Bun.Process> {
 
   // 使用 Bun.spawn 启动服务器
   const proc = Bun.spawn({
-    cmd: ['bun', 'run', 'index.ts'],
+    cmd: ["bun", "run", "index.ts"],
     env: {
       ...process.env,
       PORT: TEST_PORT.toString(),
-      DATABASE_URL: 'file:./test.db',
-      NODE_ENV: 'test',
+      DATABASE_URL: "file:./test.db",
+      NODE_ENV: "test",
     },
-    stdout: 'pipe',
-    stderr: 'pipe',
+    stdout: "pipe",
+    stderr: "pipe",
   });
 
   // 等待服务器启动
@@ -146,32 +146,33 @@ export async function startTestServer(): Promise<Bun.Process> {
     try {
       const response = await fetch(`${TEST_BASE_URL}/api/v1/health`);
       if (response.ok) {
-        console.log('✅ Test server started successfully');
+        console.log("✅ Test server started successfully");
         return proc;
       }
-    } catch (error) {
+    } catch {
       // 服务器还在启动中
     }
     await new Promise(resolve => setTimeout(resolve, 500));
   }
 
-  throw new Error('Failed to start test server');
+  throw new Error("Failed to start test server");
 }
 
 // 清理测试数据库
 export async function cleanupDatabase(): Promise<void> {
   try {
-    const testDb = getTestDb();
+    const sqlite = new Database("./test.db");
 
     // 按依赖关系删除数据
-    await testDb.run('DELETE FROM post_categories');
-    await testDb.run('DELETE FROM posts');
-    await testDb.run('DELETE FROM users');
-    await testDb.run('DELETE FROM categories');
+    sqlite.run("DELETE FROM post_categories");
+    sqlite.run("DELETE FROM posts");
+    sqlite.run("DELETE FROM users");
+    sqlite.run("DELETE FROM categories");
+    sqlite.close();
 
-    console.log('✅ Test database cleaned');
+    console.log("✅ Test database cleaned");
   } catch (error) {
-    console.warn('⚠️  Database cleanup warning:', error);
+    console.warn("⚠️  Database cleanup warning:", error);
   }
 }
 
@@ -181,20 +182,23 @@ export async function setupTestDatabase(): Promise<void> {
   await runMigrations();
   // 然后清理数据
   await cleanupDatabase();
-  console.log('✅ Test database setup complete');
+  console.log("✅ Test database setup complete");
 }
 
 // 创建测试用户
-export async function createTestUser(role: 'admin' | 'editor' = 'editor') {
-  const hashedPassword = await hashPassword('testpassword123');
+export async function createTestUser(role: "admin" | "editor" = "editor") {
+  const hashedPassword = await hashPassword("testpassword123");
   const testDb = getTestDb();
 
-  const [user] = await testDb.insert(users).values({
-    username: `testuser_${Date.now()}`,
-    email: `test_${Date.now()}@example.com`,
-    password: hashedPassword,
-    role,
-  }).returning();
+  const [user] = await testDb
+    .insert(users)
+    .values({
+      username: `testuser_${Date.now()}`,
+      email: `test_${Date.now()}@example.com`,
+      password: hashedPassword,
+      role,
+    })
+    .returning();
 
   return user;
 }
@@ -202,6 +206,7 @@ export async function createTestUser(role: 'admin' | 'editor' = 'editor') {
 // API 请求工具
 export class TestApiClient {
   private baseUrl: string;
+
   private token?: string;
 
   constructor(baseUrl: string = TEST_BASE_URL) {
@@ -214,18 +219,18 @@ export class TestApiClient {
 
   private getHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      headers.Authorization = `Bearer ${this.token}`;
     }
     return headers;
   }
 
-  async request<T = any>(
+  async request<T = unknown>(
     method: string,
     path: string,
-    body?: any
+    body?: unknown,
   ): Promise<APIResponse<T> & { status?: number }> {
     const url = `${this.baseUrl}${path}`;
     const response = await fetch(url, {
@@ -234,36 +239,36 @@ export class TestApiClient {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as APIResponse<T> & { status?: number };
     // 添加 status 属性到响应中
-    (data as any).status = response.status;
+    data.status = response.status;
     return data;
   }
 
-  async get<T = any>(path: string): Promise<APIResponse<T> & { status?: number }> {
-    return this.request('GET', path);
+  async get<T = unknown>(path: string): Promise<APIResponse<T> & { status?: number }> {
+    return await this.request("GET", path);
   }
 
-  async post<T = any>(path: string, body: any): Promise<APIResponse<T> & { status?: number }> {
-    return this.request('POST', path, body);
+  async post<T = unknown>(path: string, body: unknown): Promise<APIResponse<T> & { status?: number }> {
+    return await this.request("POST", path, body);
   }
 
-  async patch<T = any>(path: string, body: any): Promise<APIResponse<T> & { status?: number }> {
-    return this.request('PATCH', path, body);
+  async patch<T = unknown>(path: string, body: unknown): Promise<APIResponse<T> & { status?: number }> {
+    return await this.request("PATCH", path, body);
   }
 
-  async delete<T = any>(path: string): Promise<APIResponse<T> & { status?: number }> {
-    return this.request('DELETE', path);
+  async delete<T = unknown>(path: string): Promise<APIResponse<T> & { status?: number }> {
+    return await this.request("DELETE", path);
   }
 }
 
 // 全局测试设置和清理
 export async function globalSetup(): Promise<void> {
-  console.log('🧪 Setting up E2E test environment...');
+  console.log("🧪 Setting up E2E test environment...");
   await setupTestDatabase();
 }
 
 export async function globalTeardown(): Promise<void> {
-  console.log('🧪 Tearing down E2E test environment...');
+  console.log("🧪 Tearing down E2E test environment...");
   await cleanupDatabase();
 }
