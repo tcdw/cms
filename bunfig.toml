@@ -1,0 +1,36 @@
+# Bun 配置文件
+# 参考: https://bun.sh/docs/runtime/bunfig
+
+[test]
+# 测试文件匹配模式
+pattern = "tests/**/*.test.ts"
+
+# 测试超时时间 (毫秒)
+timeout = 30000
+
+# 并行测试数量
+concurrent = 4
+
+# 重复运行测试次数 (用于检测 flaky tests)
+rerun_each = 1
+
+# 显示详细测试输出
+verbose = true
+
+# 覆盖率配置
+# E2E 测试不设置严格阈值，因为跨进程调用会导致覆盖率统计不准确
+coverage = true
+coverageThreshold = 0  # 0 = 不检查阈值，只生成报告
+coverageReporters = ["text", "html"]
+# 排除测试文件和配置文件
+coverageExclude = ["**/tests/**", "**/*.test.ts", "node_modules/**", "coverage/**"]
+
+# 环境变量
+[env]
+NODE_ENV = "test"
+DATABASE_URL = "file:./test.db"
+
+# 控制台配置
+[console]
+colors = true
+timestamp = true

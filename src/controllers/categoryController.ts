@@ -85,12 +85,15 @@ export async function createCategory(request: AuthenticatedRequest): Promise<Res
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
@@ -117,11 +120,11 @@ export async function getCategories(request: IRequest): Promise<Response> {
   try {
     const url = new URL(request.url);
     const query = categoriesQuerySchema.parse({
-      page: url.searchParams.get('page'),
-      limit: url.searchParams.get('limit'),
-      search: url.searchParams.get('search'),
-      sortBy: url.searchParams.get('sortBy'),
-      sortOrder: url.searchParams.get('sortOrder'),
+      page: url.searchParams.get('page') || '1',
+      limit: url.searchParams.get('limit') || '10',
+      search: url.searchParams.get('search') || undefined,
+      sortBy: url.searchParams.get('sortBy') || 'name',
+      sortOrder: url.searchParams.get('sortOrder') || 'asc',
     });
 
     const offset = (query.page - 1) * query.limit;
@@ -177,12 +180,15 @@ export async function getCategories(request: IRequest): Promise<Response> {
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
@@ -379,12 +385,15 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,

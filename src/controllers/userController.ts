@@ -67,12 +67,15 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,

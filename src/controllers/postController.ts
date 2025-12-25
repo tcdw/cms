@@ -2,7 +2,7 @@ import type { IRequest } from 'itty-router';
 import { z } from 'zod';
 import { db } from '../db';
 import { posts, categories, postCategories, insertPostSchema, users } from '../db/schema';
-import { eq, and, desc, asc, like, or, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, like, or, sql, inArray } from 'drizzle-orm';
 import type { AuthenticatedRequest } from '../middleware/auth';
 import type { APIResponse, PaginatedResponse } from '../types';
 import { validateSlug } from '../utils/validation';
@@ -74,7 +74,7 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
     if (categoryIds.length > 0) {
       const validCategories = await db.select()
         .from(categories)
-        .where(eq(categories.id, categoryIds[0]));
+        .where(inArray(categories.id, categoryIds));
 
       if (validCategories.length !== categoryIds.length) {
         return new Response(
@@ -130,11 +130,26 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       .leftJoin(users, eq(posts.authorId, users.id))
       .limit(1);
 
+    // Get categories for the post
+    const postCategoriesList = await db.select({
+      id: categories.id,
+      name: categories.name,
+      slug: categories.slug,
+    })
+      .from(postCategories)
+      .where(eq(postCategories.postId, post.id))
+      .leftJoin(categories, eq(postCategories.categoryId, categories.id));
+
+    const postWithCategories = {
+      ...postWithAuthor,
+      categories: postCategoriesList,
+    };
+
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Post created successfully',
-        data: postWithAuthor,
+        data: postWithCategories,
       } satisfies APIResponse),
       {
         status: 201,
@@ -142,12 +157,15 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
@@ -273,12 +291,15 @@ const orderByCol = query.sortBy === 'created_at' ? posts.createdAt :
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
@@ -377,12 +398,15 @@ export async function getPost(request: IRequest): Promise<Response> {
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
@@ -546,23 +570,41 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       .leftJoin(users, eq(posts.authorId, users.id))
       .limit(1);
 
+    // Get categories for the post
+    const postCategoriesList = await db.select({
+      id: categories.id,
+      name: categories.name,
+      slug: categories.slug,
+    })
+      .from(postCategories)
+      .where(eq(postCategories.postId, parseInt(id)))
+      .leftJoin(categories, eq(postCategories.categoryId, categories.id));
+
+    const postWithCategories = {
+      ...postWithAuthor,
+      categories: postCategoriesList,
+    };
+
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Post updated successfully',
-        data: postWithAuthor,
+        data: postWithCategories,
       } satisfies APIResponse),
       {
         headers: { 'Content-Type': 'application/json' },
       }
     );
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Check for ZodError by constructor name to handle cross-instance issues
+    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
+    if (error.constructor.name === 'ZodError' || error instanceof z.ZodError) {
+      const issues = error.issues || error.errors || [];
       return new Response(
         JSON.stringify({
           success: false,
           message: 'Validation error',
-          errors: error.errors.map(e => e.message),
+          errors: issues.map((e: any) => e.message || JSON.stringify(e)),
         } satisfies APIResponse),
         {
           status: 400,
