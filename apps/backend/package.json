@@ -1,0 +1,49 @@
+{
+  "name": "@onechu/backend",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "start": "bun run index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun run src/db/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "test": "bun test",
+    "test:e2e": "bun test tests/e2e",
+    "test:auth": "bun test tests/e2e/auth.test.ts",
+    "test:posts": "bun test tests/e2e/posts.test.ts",
+    "test:categories": "bun test tests/e2e/categories.test.ts",
+    "test:utils": "bun test tests/e2e/utils.test.ts",
+    "test:watch": "bun test --watch",
+    "eslint": "eslint .",
+    "eslint:fix": "eslint --fix .",
+    "prettier": "prettier -c .",
+    "prettier:fix": "prettier -w --ignore-unknown .",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "drizzle-orm": "^0.38.3",
+    "drizzle-zod": "^0.8.3",
+    "itty-router": "^5.0.18",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.7",
+    "drizzle-kit": "^0.30.1",
+    "eslint": "^9.39.2",
+    "globals": "^16.5.0",
+    "jiti": "^2.6.1",
+    "prettier": "^3.7.4",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.50.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

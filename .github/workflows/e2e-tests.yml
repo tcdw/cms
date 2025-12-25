@@ -28,7 +28,8 @@ jobs:
         run: bun install
 
       - name: Run E2E tests
-        run: bun test:e2e
+        run: bun run test:e2e
+        working-directory: apps/backend
         env:
           NODE_ENV: test
           DATABASE_URL: file:./test.db
@@ -36,6 +37,7 @@ jobs:
 
       - name: Generate test coverage report
         run: bun test tests/e2e --coverage
+        working-directory: apps/backend
         env:
           NODE_ENV: test
           DATABASE_URL: file:./test.db
@@ -47,7 +49,7 @@ jobs:
         with:
           name: test-results
           path: |
-            coverage/
+            apps/backend/coverage/
           retention-days: 7
 
       - name: Comment PR with test results
