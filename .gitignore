@@ -26,7 +26,6 @@ build/
 *.sw?
 
 # Logs
-*.log
 logs/
 npm-debug.log*
 yarn-debug.log*
