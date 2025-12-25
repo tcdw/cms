@@ -11,7 +11,7 @@
 - **路由**：`itty-router`，API Base Path：`/api/v1`（见 [apps/backend/src/routes/index.ts](apps/backend/src/routes/index.ts)）
 - **数据库**：SQLite（通过 **bun:sqlite**），ORM 使用 **Drizzle ORM**（`drizzle-orm/bun-sqlite`）
 - **认证**：JWT（`jsonwebtoken`）+ 密码哈希（`bcryptjs`）
-- **校验**：Zod（`drizzle-zod` 在 schema 层生成 insert/select schema）+ 少量手写校验工具
+- **校验**：Zod（共享 schema 位于 `packages/schemas`）+ 少量手写校验工具
 - **测试**：在 `apps/backend` 内运行 `bun test`（E2E 测试在 [apps/backend/tests/e2e](apps/backend/tests/e2e)）
 
 > 备注：仓库 DB 层已迁移至 `bun:sqlite` + `drizzle-orm/bun-sqlite`，充分利用 Bun 原生能力。新增代码应保持与现有 DB 选型一致。
@@ -47,6 +47,7 @@
 - [apps/backend/src/types/index.ts](apps/backend/src/types/index.ts)：响应与认证相关类型
 - [apps/backend/drizzle](apps/backend/drizzle/)：Drizzle Kit 生成的迁移文件
 - [apps/backend/tests/e2e](apps/backend/tests/e2e)：端到端测试（通过启动真实服务并用 `fetch` 调用 API）
+- [packages/schemas](packages/schemas)：共享 Zod schema 与类型定义（供前端复用）
 
 ## 4. 开发/运行命令（以 package.json 为准）
 

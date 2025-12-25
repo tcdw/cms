@@ -25,7 +25,7 @@ export function sanitizeHtml(html: string): string {
 /**
  * Check if an error is a ZodError.
  * Uses both instanceof and constructor name check to handle cross-instance issues
- * (e.g., when drizzle-zod creates ZodErrors from a different zod instance).
+ * (e.g., when schemas come from a different zod instance).
  */
 export function isZodError(error: unknown): boolean {
   if (error === null || typeof error !== "object") return false;

@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -95,40 +94,3 @@ export const postCategoriesRelations = relations(postCategories, ({ one }) => ({
     references: [categories.id],
   }),
 }));
-
-export const insertUserSchema = createInsertSchema(users, {
-  username: schema => schema.min(3).max(50),
-  email: schema => schema.email(),
-  password: schema => schema.min(6),
-  role: schema => schema.default("editor"),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const selectUserSchema = createSelectSchema(users);
-
-export const insertCategorySchema = createInsertSchema(categories, {
-  name: schema => schema.min(1).max(100),
-  slug: schema => schema.regex(/^[a-z0-9-]+$/),
-  description: schema => schema.max(500).optional(),
-}).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertPostSchema = createInsertSchema(posts, {
-  title: schema => schema.min(1).max(200),
-  slug: schema => schema.regex(/^[a-z0-9-]+$/),
-  content: schema => schema.min(1),
-  excerpt: schema => schema.max(500).optional(),
-  status: schema => schema.default("draft"),
-  featuredImage: schema => schema.url().optional(),
-}).omit({
-  id: true,
-  authorId: true,
-  createdAt: true,
-  updatedAt: true,
-});

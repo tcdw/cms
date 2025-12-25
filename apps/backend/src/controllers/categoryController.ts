@@ -2,8 +2,10 @@ import { asc, desc, eq, like, sql } from "drizzle-orm";
 import type { IRequest } from "itty-router";
 import { z } from "zod";
 
+import { insertCategorySchema } from "@onechu/schemas";
+
 import { db } from "../db";
-import { categories, insertCategorySchema, postCategories, posts } from "../db/schema";
+import { categories, postCategories, posts } from "../db/schema";
 import type { AuthenticatedRequest } from "../middleware/auth";
 import type { APIResponse, PaginatedResponse } from "../types";
 import { isZodError, validateSlug } from "../utils/validation";

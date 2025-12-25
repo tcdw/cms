@@ -2,8 +2,10 @@ import { eq } from "drizzle-orm";
 import type { IRequest } from "itty-router";
 import { z } from "zod";
 
+import { insertUserSchema } from "@onechu/schemas";
+
 import { db } from "../db";
-import { insertUserSchema, users } from "../db/schema";
+import { users } from "../db/schema";
 import type { APIResponse, JWTPayload } from "../types";
 import { generateToken, hashPassword, verifyPassword } from "../utils/auth";
 import { isZodError } from "../utils/validation";

@@ -2,7 +2,8 @@
   "name": "onechu",
   "private": true,
   "workspaces": [
-    "apps/backend"
+    "apps/backend",
+    "packages/*"
   ],
   "scripts": {}
 }
