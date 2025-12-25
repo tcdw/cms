@@ -121,7 +121,7 @@ async function createTablesManually(): Promise<void> {
 }
 
 // 启动测试服务器
-export async function startTestServer(): Promise<Bun.Process> {
+export async function startTestServer(): Promise<ReturnType<typeof Bun.spawn>> {
   // 首先确保数据库已迁移
   await runMigrations();
 
@@ -227,10 +227,12 @@ export class TestApiClient {
     return headers;
   }
 
-  async request<T = unknown>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async request<T = any>(
     method: string,
     path: string,
-    body?: unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    body?: any,
   ): Promise<APIResponse<T> & { status?: number }> {
     const url = `${this.baseUrl}${path}`;
     const response = await fetch(url, {
@@ -245,19 +247,23 @@ export class TestApiClient {
     return data;
   }
 
-  async get<T = unknown>(path: string): Promise<APIResponse<T> & { status?: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async get<T = any>(path: string): Promise<APIResponse<T> & { status?: number }> {
     return await this.request("GET", path);
   }
 
-  async post<T = unknown>(path: string, body: unknown): Promise<APIResponse<T> & { status?: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async post<T = any>(path: string, body: any): Promise<APIResponse<T> & { status?: number }> {
     return await this.request("POST", path, body);
   }
 
-  async patch<T = unknown>(path: string, body: unknown): Promise<APIResponse<T> & { status?: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async patch<T = any>(path: string, body: any): Promise<APIResponse<T> & { status?: number }> {
     return await this.request("PATCH", path, body);
   }
 
-  async delete<T = unknown>(path: string): Promise<APIResponse<T> & { status?: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async delete<T = any>(path: string): Promise<APIResponse<T> & { status?: number }> {
     return await this.request("DELETE", path);
   }
 }

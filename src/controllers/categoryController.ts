@@ -6,7 +6,7 @@ import { db } from "../db";
 import { categories, insertCategorySchema, postCategories, posts } from "../db/schema";
 import type { AuthenticatedRequest } from "../middleware/auth";
 import type { APIResponse, PaginatedResponse } from "../types";
-import { validateSlug } from "../utils/validation";
+import { isZodError, validateSlug } from "../utils/validation";
 
 const categoryUpdateSchema = insertCategorySchema.partial();
 
@@ -86,10 +86,9 @@ export async function createCategory(request: AuthenticatedRequest): Promise<Res
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -135,7 +134,8 @@ export async function getCategories(request: IRequest): Promise<Response> {
       whereClause = like(categories.name, `%${query.search}%`);
     }
 
-    const orderBy = query.sortOrder === "desc" ? desc(categories[query.sortBy]) : asc(categories[query.sortBy]);
+    const sortColumn = query.sortBy === "created_at" ? categories.createdAt : categories.name;
+    const orderBy = query.sortOrder === "desc" ? desc(sortColumn) : asc(sortColumn);
 
     const [categoriesList, totalCount] = await Promise.all([
       db
@@ -181,10 +181,9 @@ export async function getCategories(request: IRequest): Promise<Response> {
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -386,10 +385,9 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -470,7 +468,7 @@ export async function deleteCategory(request: AuthenticatedRequest): Promise<Res
       .from(postCategories)
       .where(eq(postCategories.categoryId, parseInt(id)));
 
-    if (categoryPosts.count > 0) {
+    if (categoryPosts && categoryPosts.count > 0) {
       return new Response(
         JSON.stringify({
           success: false,

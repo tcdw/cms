@@ -6,8 +6,17 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { cleanupDatabase, setupTestDatabase, startTestServer, TEST_BASE_URL } from "./setup";
 
+interface APIData {
+  success: boolean;
+  message: string;
+  data?: {
+    username?: string;
+    token?: string;
+  };
+}
+
 describe("Simple Smoke Test", () => {
-  let serverProcess: Bun.Process;
+  let serverProcess: Awaited<ReturnType<typeof startTestServer>>;
 
   beforeAll(async () => {
     await setupTestDatabase();
@@ -25,7 +34,7 @@ describe("Simple Smoke Test", () => {
     const response = await fetch(`${TEST_BASE_URL}/api/v1/health`);
     expect(response.ok).toBe(true);
 
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
     expect(data.success).toBe(true);
     expect(data.message).toBe("API is healthy");
   });
@@ -42,9 +51,9 @@ describe("Simple Smoke Test", () => {
     });
 
     expect(response.ok).toBe(true);
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
     expect(data.success).toBe(true);
-    expect(data.data.username).toBe("testuser");
+    expect(data.data?.username).toBe("testuser");
   });
 
   test("可以登录并获取 token", async () => {
@@ -70,16 +79,16 @@ describe("Simple Smoke Test", () => {
     });
 
     expect(response.ok).toBe(true);
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
     expect(data.success).toBe(true);
-    expect(data.data.token).toBeDefined();
-    expect(typeof data.data.token).toBe("string");
+    expect(data.data?.token).toBeDefined();
+    expect(typeof data.data?.token).toBe("string");
   });
 
   test("受保护路由需要认证", async () => {
     // 不带 token 访问
     const response = await fetch(`${TEST_BASE_URL}/api/v1/profile`);
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
 
     expect(response.status).toBe(401);
     expect(data.success).toBe(false);
@@ -88,7 +97,7 @@ describe("Simple Smoke Test", () => {
 
   test("404 路由返回正确格式", async () => {
     const response = await fetch(`${TEST_BASE_URL}/api/v1/nonexistent`);
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
 
     expect(response.status).toBe(404);
     expect(data.success).toBe(false);

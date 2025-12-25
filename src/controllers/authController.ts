@@ -6,6 +6,7 @@ import { db } from "../db";
 import { insertUserSchema, users } from "../db/schema";
 import type { APIResponse, JWTPayload } from "../types";
 import { generateToken, hashPassword, verifyPassword } from "../utils/auth";
+import { isZodError } from "../utils/validation";
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -29,6 +30,10 @@ export async function register(request: IRequest): Promise<Response> {
           role: validated.role || "editor",
         })
         .returning();
+
+      if (!user) {
+        throw new Error("Failed to create user");
+      }
 
       const { password: _, ...userWithoutPassword } = user;
       void _; // suppress unused variable warning
@@ -61,10 +66,9 @@ export async function register(request: IRequest): Promise<Response> {
       throw error;
     }
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -138,10 +142,9 @@ export async function login(request: IRequest): Promise<Response> {
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,

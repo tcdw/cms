@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { cleanupDatabase, setupTestDatabase, startTestServer, TEST_BASE_URL, TestApiClient } from "./setup";
 
 describe("Utils & Health Check E2E Tests", () => {
-  let serverProcess: Bun.Process;
+  let serverProcess: Awaited<ReturnType<typeof startTestServer>>;
   let client: TestApiClient;
 
   beforeAll(async () => {

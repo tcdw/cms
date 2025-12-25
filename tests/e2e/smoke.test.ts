@@ -7,8 +7,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { cleanupDatabase, setupTestDatabase, startTestServer, TEST_BASE_URL } from "./setup";
 
+interface APIData {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}
+
 describe("Smoke Test - 验证测试环境", () => {
-  let serverProcess: Bun.Process;
+  let serverProcess: Awaited<ReturnType<typeof startTestServer>>;
 
   beforeAll(async () => {
     await setupTestDatabase();
@@ -31,7 +37,7 @@ describe("Smoke Test - 验证测试环境", () => {
     const response = await fetch(`${TEST_BASE_URL}/api/v1/health`);
     expect(response.ok).toBe(true);
 
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
     expect(data.success).toBe(true);
     expect(data.message).toBe("API is healthy");
   });
@@ -49,13 +55,13 @@ describe("Smoke Test - 验证测试环境", () => {
     });
 
     expect(response.ok).toBe(true);
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
     expect(data.success).toBe(true);
   });
 
   test("✅ JSON 响应格式正确", async () => {
     const response = await fetch(`${TEST_BASE_URL}/api/v1/health`);
-    const data = await response.json();
+    const data = (await response.json()) as APIData;
 
     // 验证响应结构
     expect(typeof data.success).toBe("boolean");

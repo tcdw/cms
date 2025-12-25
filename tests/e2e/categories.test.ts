@@ -14,13 +14,15 @@ import {
   TestApiClient,
 } from "./setup";
 
+type TestUser = NonNullable<Awaited<ReturnType<typeof createTestUser>>>;
+
 describe("Categories E2E Tests", () => {
-  let serverProcess: Bun.Process;
+  let serverProcess: Awaited<ReturnType<typeof startTestServer>>;
   let client: TestApiClient;
   let adminToken: string;
   let editorToken: string;
-  let adminUser: Awaited<ReturnType<typeof createTestUser>>;
-  let editorUser: Awaited<ReturnType<typeof createTestUser>>;
+  let adminUser: TestUser;
+  let editorUser: TestUser;
 
   beforeAll(async () => {
     await setupTestDatabase();
@@ -28,8 +30,11 @@ describe("Categories E2E Tests", () => {
     client = new TestApiClient(TEST_BASE_URL);
 
     // 创建测试用户
-    adminUser = await createTestUser("admin");
-    editorUser = await createTestUser("editor");
+    const admin = await createTestUser("admin");
+    const editor = await createTestUser("editor");
+    if (!admin || !editor) throw new Error("Failed to create test users");
+    adminUser = admin;
+    editorUser = editor;
 
     // 登录获取 token
     const adminLoginResponse = await client.post("/api/v1/auth/login", {
@@ -55,8 +60,11 @@ describe("Categories E2E Tests", () => {
   beforeEach(async () => {
     await cleanupDatabase();
     // 重新创建用户
-    adminUser = await createTestUser("admin");
-    editorUser = await createTestUser("editor");
+    const admin = await createTestUser("admin");
+    const editor = await createTestUser("editor");
+    if (!admin || !editor) throw new Error("Failed to create test users");
+    adminUser = admin;
+    editorUser = editor;
 
     const adminLoginResponse = await client.post("/api/v1/auth/login", {
       username: adminUser.username,

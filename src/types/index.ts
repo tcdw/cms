@@ -12,14 +12,16 @@ export interface JWTPayload {
   role: "admin" | "editor";
 }
 
-export interface APIResponse<T = unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface APIResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
   errors?: string[];
 }
 
-export interface PaginatedResponse<T = unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface PaginatedResponse<T = any> {
   success: boolean;
   data: T[];
   pagination: {

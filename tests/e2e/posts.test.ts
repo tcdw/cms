@@ -14,13 +14,15 @@ import {
   TestApiClient,
 } from "./setup";
 
+type TestUser = NonNullable<Awaited<ReturnType<typeof createTestUser>>>;
+
 describe("Posts E2E Tests", () => {
-  let serverProcess: Bun.Process;
+  let serverProcess: Awaited<ReturnType<typeof startTestServer>>;
   let client: TestApiClient;
   let authToken: string;
   let adminToken: string;
-  let regularUser: Awaited<ReturnType<typeof createTestUser>>;
-  let adminUser: Awaited<ReturnType<typeof createTestUser>>;
+  let regularUser: TestUser;
+  let adminUser: TestUser;
 
   beforeAll(async () => {
     await setupTestDatabase();
@@ -28,8 +30,11 @@ describe("Posts E2E Tests", () => {
     client = new TestApiClient(TEST_BASE_URL);
 
     // 创建测试用户
-    regularUser = await createTestUser("editor");
-    adminUser = await createTestUser("admin");
+    const regular = await createTestUser("editor");
+    const admin = await createTestUser("admin");
+    if (!regular || !admin) throw new Error("Failed to create test users");
+    regularUser = regular;
+    adminUser = admin;
 
     // 登录获取 token
     const loginResponse = await client.post("/api/v1/auth/login", {
@@ -55,8 +60,11 @@ describe("Posts E2E Tests", () => {
   beforeEach(async () => {
     await cleanupDatabase();
     // 重新创建用户
-    regularUser = await createTestUser("editor");
-    adminUser = await createTestUser("admin");
+    const regular = await createTestUser("editor");
+    const admin = await createTestUser("admin");
+    if (!regular || !admin) throw new Error("Failed to create test users");
+    regularUser = regular;
+    adminUser = admin;
 
     const loginResponse = await client.post("/api/v1/auth/login", {
       username: regularUser.username,
@@ -185,7 +193,11 @@ describe("Posts E2E Tests", () => {
     test("should get all posts without authentication", async () => {
       client.setToken(""); // 清除 token
 
-      const response = await client.get("/api/v1/posts");
+      const response = (await client.get("/api/v1/posts")) as unknown as {
+        success: boolean;
+        data: unknown[];
+        pagination: unknown;
+      };
 
       expect(response.success).toBe(true);
       expect(response.data).toBeDefined();
@@ -210,7 +222,11 @@ describe("Posts E2E Tests", () => {
     });
 
     test("should paginate results", async () => {
-      const response = await client.get("/api/v1/posts?page=1&limit=2");
+      const response = (await client.get("/api/v1/posts?page=1&limit=2")) as unknown as {
+        success: boolean;
+        data: unknown[];
+        pagination: { page: number; limit: number; total: number };
+      };
 
       expect(response.success).toBe(true);
       expect(response.data!.length).toBe(2);
@@ -308,6 +324,7 @@ describe("Posts E2E Tests", () => {
 
       // Try to update as different user
       const differentUser = await createTestUser("editor");
+      if (!differentUser) throw new Error("Failed to create different user");
       const loginResponse = await client.post("/api/v1/auth/login", {
         username: differentUser.username,
         password: "testpassword123",
@@ -405,6 +422,7 @@ describe("Posts E2E Tests", () => {
 
       // Try to delete as different user
       const differentUser = await createTestUser("editor");
+      if (!differentUser) throw new Error("Failed to create different user");
       const loginResponse = await client.post("/api/v1/auth/login", {
         username: differentUser.username,
         password: "testpassword123",

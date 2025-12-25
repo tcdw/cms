@@ -6,6 +6,7 @@ import { users } from "../db/schema";
 import type { AuthenticatedRequest } from "../middleware/auth";
 import type { APIResponse } from "../types";
 import { hashPassword, verifyPassword } from "../utils/auth";
+import { isZodError } from "../utils/validation";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -65,10 +66,9 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,

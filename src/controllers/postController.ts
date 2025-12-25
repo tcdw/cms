@@ -6,7 +6,7 @@ import { db } from "../db";
 import { categories, insertPostSchema, postCategories, posts, users } from "../db/schema";
 import type { AuthenticatedRequest } from "../middleware/auth";
 import type { APIResponse, PaginatedResponse } from "../types";
-import { validateSlug } from "../utils/validation";
+import { isZodError, validateSlug } from "../utils/validation";
 
 const postUpdateSchema = insertPostSchema.partial();
 
@@ -36,7 +36,7 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as { categoryIds?: number[] };
     const data = insertPostSchema.parse(body);
 
     if (!validateSlug(data.slug)) {
@@ -99,6 +99,10 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       })
       .returning();
 
+    if (!post) {
+      throw new Error("Failed to create post");
+    }
+
     if (categoryIds.length > 0) {
       await db.insert(postCategories).values(
         categoryIds.map((categoryId: number) => ({
@@ -158,10 +162,9 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -222,18 +225,14 @@ export async function getPosts(request: IRequest): Promise<Response> {
       whereClause = and(...conditions);
     }
 
-    let categoryFilter;
     if (query.category) {
       const categoryPosts = await db.select().from(postCategories).where(eq(postCategories.categoryId, query.category));
 
       const postIds = categoryPosts.map(cp => cp.postId);
       if (postIds.length > 0) {
-        categoryFilter = posts.id.in(postIds);
+        const categoryFilter = inArray(posts.id, postIds);
+        whereClause = whereClause ? and(whereClause, categoryFilter) : categoryFilter;
       }
-    }
-
-    if (categoryFilter) {
-      whereClause = whereClause ? and(whereClause, categoryFilter) : categoryFilter;
     }
 
     const orderByCol =
@@ -288,10 +287,9 @@ export async function getPosts(request: IRequest): Promise<Response> {
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -397,10 +395,9 @@ export async function getPost(request: IRequest): Promise<Response> {
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,
@@ -457,7 +454,7 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as { categoryIds?: number[] };
     const data = postUpdateSchema.parse(body);
 
     if (data.slug && !validateSlug(data.slug)) {
@@ -595,10 +592,9 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       },
     );
   } catch (error) {
-    // Check for ZodError by constructor name to handle cross-instance issues
-    // drizzle-zod creates ZodErrors with 'issues' property, not 'errors'
-    if (error instanceof z.ZodError) {
-      const issues = error.issues || [];
+    if (isZodError(error)) {
+      const zodError = error as z.ZodError;
+      const issues = zodError.issues || [];
       return new Response(
         JSON.stringify({
           success: false,

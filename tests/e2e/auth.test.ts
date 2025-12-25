@@ -15,7 +15,7 @@ import {
 } from "./setup";
 
 describe("Authentication E2E Tests", () => {
-  let serverProcess: Bun.Process;
+  let serverProcess: ReturnType<typeof startTestServer> extends Promise<infer T> ? T : never;
   let client: TestApiClient;
 
   beforeAll(async () => {
@@ -222,11 +222,13 @@ describe("Authentication E2E Tests", () => {
 
   describe("User Profile Management", () => {
     let authToken: string;
-    let testUser: Awaited<ReturnType<typeof createTestUser>>;
+    let testUser: NonNullable<Awaited<ReturnType<typeof createTestUser>>>;
 
     beforeEach(async () => {
       // 创建测试用户并登录
-      testUser = await createTestUser("editor");
+      const user = await createTestUser("editor");
+      if (!user) throw new Error("Failed to create test user");
+      testUser = user;
       const loginResponse = await client.post("/api/v1/auth/login", {
         username: testUser.username,
         password: "testpassword123",
