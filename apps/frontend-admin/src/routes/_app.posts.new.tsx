@@ -1,9 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import MDEditor from "@uiw/react-md-editor";
+import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { MilkdownEditor, type MilkdownEditorRef } from "@/components/ui/milkdown-editor";
 
 import { getCategories } from "@/api/categories";
 import { createPost, type CreatePostData } from "@/api/posts";
@@ -31,6 +33,7 @@ function NewPostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const editorRef = useRef<MilkdownEditorRef>(null);
 
   const { data: categoriesData } = useQuery({
     queryKey: ["categories", { limit: 100 }],
@@ -127,9 +130,12 @@ function NewPostPage() {
                     name="content"
                     control={control}
                     render={({ field }) => (
-                      <div data-color-mode="light">
-                        <MDEditor value={field.value} onChange={val => field.onChange(val || "")} height={400} />
-                      </div>
+                      <MilkdownEditor
+                        ref={editorRef}
+                        defaultValue={field.value}
+                        onChange={field.onChange}
+                        placeholder="开始写作..."
+                      />
                     )}
                   />
                   {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}

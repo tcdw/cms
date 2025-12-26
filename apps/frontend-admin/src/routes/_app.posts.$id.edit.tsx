@@ -1,13 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import MDEditor from "@uiw/react-md-editor";
-import { useEffect } from "react";
+import { useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { MilkdownEditor, type MilkdownEditorRef } from "@/components/ui/milkdown-editor";
+
 import { getCategories } from "@/api/categories";
-import { getPost, updatePost, type UpdatePostData } from "@/api/posts";
+import { getPost, updatePost, type Post, type UpdatePostData } from "@/api/posts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,21 +29,16 @@ const postSchema = z.object({
 
 type PostForm = z.infer<typeof postSchema>;
 
-function EditPostPage() {
-  const { id } = Route.useParams();
+interface EditPostFormProps {
+  post: Post;
+  categories: Array<{ id: number; name: string; slug: string }>;
+}
+
+function EditPostForm({ post, categories }: EditPostFormProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  const { data: postData, isLoading } = useQuery({
-    queryKey: ["post", id],
-    queryFn: () => getPost(Number(id)),
-  });
-
-  const { data: categoriesData } = useQuery({
-    queryKey: ["categories", { limit: 100 }],
-    queryFn: () => getCategories({ limit: 100 }),
-  });
+  const editorRef = useRef<MilkdownEditorRef>(null);
 
   const {
     register,
@@ -50,31 +46,19 @@ function EditPostPage() {
     handleSubmit,
     setValue,
     watch,
-    reset,
     formState: { errors },
   } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
     defaultValues: {
-      status: "draft",
-      content: "",
-      categoryIds: [],
+      title: post.title,
+      slug: post.slug,
+      content: post.content,
+      excerpt: post.excerpt ?? "",
+      status: post.status,
+      featuredImage: post.featuredImage ?? "",
+      categoryIds: post.categories?.map(c => c.id) ?? [],
     },
   });
-
-  useEffect(() => {
-    if (postData?.data) {
-      const post = postData.data;
-      reset({
-        title: post.title,
-        slug: post.slug,
-        content: post.content,
-        excerpt: post.excerpt || "",
-        status: post.status,
-        featuredImage: post.featuredImage || "",
-        categoryIds: post.categories?.map(c => c.id) || [],
-      });
-    }
-  }, [postData, reset]);
 
   const title = watch("title");
 
@@ -91,11 +75,11 @@ function EditPostPage() {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePostData) => updatePost(Number(id), data),
+    mutationFn: (data: UpdatePostData) => updatePost(post.id, data),
     onSuccess: response => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
-        queryClient.invalidateQueries({ queryKey: ["post", id] });
+        queryClient.invalidateQueries({ queryKey: ["post", String(post.id)] });
         toast({ title: "Post updated successfully" });
         navigate({ to: "/posts" });
       } else {
@@ -113,10 +97,6 @@ function EditPostPage() {
       featuredImage: data.featuredImage || undefined,
     });
   };
-
-  if (isLoading) {
-    return <div className="text-center py-8">Loading...</div>;
-  }
 
   return (
     <div className="space-y-6">
@@ -155,9 +135,13 @@ function EditPostPage() {
                     name="content"
                     control={control}
                     render={({ field }) => (
-                      <div data-color-mode="light">
-                        <MDEditor value={field.value} onChange={val => field.onChange(val || "")} height={400} />
-                      </div>
+                      <MilkdownEditor
+                        key={post.id}
+                        ref={editorRef}
+                        defaultValue={field.value}
+                        onChange={field.onChange}
+                        placeholder="开始写作..."
+                      />
                     )}
                   />
                   {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
@@ -210,7 +194,7 @@ function EditPostPage() {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoriesData?.data?.map(cat => (
+                          {categories.map(cat => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                               {cat.name}
                             </SelectItem>
@@ -241,6 +225,26 @@ function EditPostPage() {
       </form>
     </div>
   );
+}
+
+function EditPostPage() {
+  const { id } = Route.useParams();
+
+  const { data: postData, isLoading: isLoadingPost } = useQuery({
+    queryKey: ["post", id],
+    queryFn: () => getPost(Number(id)),
+  });
+
+  const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories", { limit: 100 }],
+    queryFn: () => getCategories({ limit: 100 }),
+  });
+
+  if (isLoadingPost || isLoadingCategories || !postData?.data) {
+    return <div className="text-center py-8">Loading...</div>;
+  }
+
+  return <EditPostForm post={postData.data} categories={categoriesData?.data ?? []} />;
 }
 
 export const Route = createFileRoute("/_app/posts/$id/edit")({
