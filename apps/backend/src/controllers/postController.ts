@@ -242,6 +242,10 @@ export async function getPosts(request: IRequest): Promise<Response> {
       if (postIds.length > 0) {
         const categoryFilter = inArray(posts.id, postIds);
         whereClause = whereClause ? and(whereClause, categoryFilter) : categoryFilter;
+      } else {
+        // No posts in this category - add impossible condition to return empty result
+        const categoryFilter = eq(posts.id, -1);
+        whereClause = whereClause ? and(whereClause, categoryFilter) : categoryFilter;
       }
     }
 
