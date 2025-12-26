@@ -8,7 +8,7 @@ import { z } from "zod";
 import { MilkdownEditor, type MilkdownEditorRef } from "@/components/ui/milkdown-editor";
 
 import { getCategories } from "@/api/categories";
-import { getPost, updatePost, type Post, type UpdatePostData } from "@/api/posts";
+import { createPost, getPost, updatePost, type CreatePostData, type Post, type UpdatePostData } from "@/api/posts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,12 +29,13 @@ const postSchema = z.object({
 
 type PostForm = z.infer<typeof postSchema>;
 
-interface EditPostFormProps {
-  post: Post;
+interface PostFormProps {
+  post?: Post;
   categories: Array<{ id: number; name: string; slug: string }>;
 }
 
-function EditPostForm({ post, categories }: EditPostFormProps) {
+function PostForm({ post, categories }: PostFormProps) {
+  const isNew = !post;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -49,15 +50,25 @@ function EditPostForm({ post, categories }: EditPostFormProps) {
     formState: { errors },
   } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
-    defaultValues: {
-      title: post.title,
-      slug: post.slug,
-      content: post.content,
-      excerpt: post.excerpt ?? "",
-      status: post.status,
-      featuredImage: post.featuredImage ?? "",
-      categoryIds: post.categories?.map(c => c.id) ?? [],
-    },
+    defaultValues: isNew
+      ? {
+          title: "",
+          slug: "",
+          content: "",
+          excerpt: "",
+          status: "draft",
+          featuredImage: "",
+          categoryIds: [],
+        }
+      : {
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          excerpt: post.excerpt ?? "",
+          status: post.status,
+          featuredImage: post.featuredImage ?? "",
+          categoryIds: post.categories?.map(c => c.id) ?? [],
+        },
   });
 
   const title = watch("title");
@@ -75,19 +86,26 @@ function EditPostForm({ post, categories }: EditPostFormProps) {
   };
 
   const mutation = useMutation({
-    mutationFn: (data: UpdatePostData) => updatePost(post.id, data),
+    mutationFn: (data: CreatePostData | UpdatePostData) =>
+      isNew ? createPost(data as CreatePostData) : updatePost(post.id, data as UpdatePostData),
     onSuccess: response => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
-        queryClient.invalidateQueries({ queryKey: ["post", String(post.id)] });
-        toast({ title: "Post updated successfully" });
+        if (!isNew) {
+          queryClient.invalidateQueries({ queryKey: ["post", String(post.id)] });
+        }
+        toast({ title: isNew ? "Post created successfully" : "Post updated successfully" });
         navigate({ to: "/posts" });
       } else {
-        toast({ title: "Failed to update post", description: response.message, variant: "destructive" });
+        toast({
+          title: isNew ? "Failed to create post" : "Failed to update post",
+          description: response.message,
+          variant: "destructive",
+        });
       }
     },
     onError: () => {
-      toast({ title: "Failed to update post", variant: "destructive" });
+      toast({ title: isNew ? "Failed to create post" : "Failed to update post", variant: "destructive" });
     },
   });
 
@@ -101,7 +119,7 @@ function EditPostForm({ post, categories }: EditPostFormProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Edit Post</h1>
+        <h1 className="text-3xl font-bold">{isNew ? "New Post" : "Edit Post"}</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -136,7 +154,7 @@ function EditPostForm({ post, categories }: EditPostFormProps) {
                     control={control}
                     render={({ field }) => (
                       <MilkdownEditor
-                        key={post.id}
+                        key={post?.id ?? "new"}
                         ref={editorRef}
                         defaultValue={field.value}
                         onChange={field.onChange}
@@ -217,7 +235,7 @@ function EditPostForm({ post, categories }: EditPostFormProps) {
                 Cancel
               </Button>
               <Button type="submit" className="flex-1" disabled={mutation.isPending}>
-                {mutation.isPending ? "Saving..." : "Save Changes"}
+                {mutation.isPending ? (isNew ? "Creating..." : "Saving...") : isNew ? "Create Post" : "Save Changes"}
               </Button>
             </div>
           </div>
@@ -227,12 +245,14 @@ function EditPostForm({ post, categories }: EditPostFormProps) {
   );
 }
 
-function EditPostPage() {
+function PostPage() {
   const { id } = Route.useParams();
+  const isNew = id === "new";
 
   const { data: postData, isLoading: isLoadingPost } = useQuery({
     queryKey: ["post", id],
     queryFn: () => getPost(Number(id)),
+    enabled: !isNew,
   });
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
@@ -240,13 +260,13 @@ function EditPostPage() {
     queryFn: () => getCategories({ limit: 100 }),
   });
 
-  if (isLoadingPost || isLoadingCategories || !postData?.data) {
+  if (isLoadingCategories || (!isNew && (isLoadingPost || !postData?.data))) {
     return <div className="text-center py-8">Loading...</div>;
   }
 
-  return <EditPostForm post={postData.data} categories={categoriesData?.data ?? []} />;
+  return <PostForm post={isNew ? undefined : postData?.data} categories={categoriesData?.data ?? []} />;
 }
 
 export const Route = createFileRoute("/_app/posts/$id/edit")({
-  component: EditPostPage,
+  component: PostPage,
 });

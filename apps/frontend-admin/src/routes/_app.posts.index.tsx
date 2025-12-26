@@ -74,7 +74,7 @@ function PostsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Posts</h1>
-        <Button onClick={() => navigate({ to: "/posts/new" })}>
+        <Button onClick={() => navigate({ to: "/posts/$id/edit", params: { id: "new" } })}>
           <Plus className="size-4" />
           New Post
         </Button>

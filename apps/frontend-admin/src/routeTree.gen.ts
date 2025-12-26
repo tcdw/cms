@@ -17,7 +17,6 @@ import { Route as AppPostsRouteImport } from './routes/_app.posts'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCategoriesRouteImport } from './routes/_app.categories'
 import { Route as AppPostsIndexRouteImport } from './routes/_app.posts.index'
-import { Route as AppPostsNewRouteImport } from './routes/_app.posts.new'
 import { Route as AppPostsIdEditRouteImport } from './routes/_app.posts.$id.edit'
 
 const AuthRoute = AuthRouteImport.update({
@@ -58,11 +57,6 @@ const AppPostsIndexRoute = AppPostsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppPostsRoute,
 } as any)
-const AppPostsNewRoute = AppPostsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AppPostsRoute,
-} as any)
 const AppPostsIdEditRoute = AppPostsIdEditRouteImport.update({
   id: '/$id/edit',
   path: '/$id/edit',
@@ -75,7 +69,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/posts': typeof AppPostsRouteWithChildren
   '/login': typeof AuthLoginRoute
-  '/posts/new': typeof AppPostsNewRoute
   '/posts/': typeof AppPostsIndexRoute
   '/posts/$id/edit': typeof AppPostsIdEditRoute
 }
@@ -84,7 +77,6 @@ export interface FileRoutesByTo {
   '/categories': typeof AppCategoriesRoute
   '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
-  '/posts/new': typeof AppPostsNewRoute
   '/posts': typeof AppPostsIndexRoute
   '/posts/$id/edit': typeof AppPostsIdEditRoute
 }
@@ -97,7 +89,6 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/posts': typeof AppPostsRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
-  '/_app/posts/new': typeof AppPostsNewRoute
   '/_app/posts/': typeof AppPostsIndexRoute
   '/_app/posts/$id/edit': typeof AppPostsIdEditRoute
 }
@@ -109,7 +100,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/posts'
     | '/login'
-    | '/posts/new'
     | '/posts/'
     | '/posts/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -118,7 +108,6 @@ export interface FileRouteTypes {
     | '/categories'
     | '/dashboard'
     | '/login'
-    | '/posts/new'
     | '/posts'
     | '/posts/$id/edit'
   id:
@@ -130,7 +119,6 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/posts'
     | '/_auth/login'
-    | '/_app/posts/new'
     | '/_app/posts/'
     | '/_app/posts/$id/edit'
   fileRoutesById: FileRoutesById
@@ -199,13 +187,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPostsIndexRouteImport
       parentRoute: typeof AppPostsRoute
     }
-    '/_app/posts/new': {
-      id: '/_app/posts/new'
-      path: '/new'
-      fullPath: '/posts/new'
-      preLoaderRoute: typeof AppPostsNewRouteImport
-      parentRoute: typeof AppPostsRoute
-    }
     '/_app/posts/$id/edit': {
       id: '/_app/posts/$id/edit'
       path: '/$id/edit'
@@ -217,13 +198,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppPostsRouteChildren {
-  AppPostsNewRoute: typeof AppPostsNewRoute
   AppPostsIndexRoute: typeof AppPostsIndexRoute
   AppPostsIdEditRoute: typeof AppPostsIdEditRoute
 }
 
 const AppPostsRouteChildren: AppPostsRouteChildren = {
-  AppPostsNewRoute: AppPostsNewRoute,
   AppPostsIndexRoute: AppPostsIndexRoute,
   AppPostsIdEditRoute: AppPostsIdEditRoute,
 }
