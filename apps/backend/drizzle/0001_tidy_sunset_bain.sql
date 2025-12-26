@@ -1,0 +1,1 @@
+ALTER TABLE `posts` ADD `content_type` text DEFAULT 'markdown' NOT NULL;

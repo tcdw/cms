@@ -35,6 +35,9 @@ export const posts = sqliteTable("posts", {
   title: text("title").notNull(),
   slug: text("slug").unique().notNull(),
   content: text("content").notNull(),
+  contentType: text("content_type", { enum: ["markdown", "html"] })
+    .notNull()
+    .default("markdown"),
   excerpt: text("excerpt"),
   status: text("status", { enum: ["draft", "published"] })
     .notNull()

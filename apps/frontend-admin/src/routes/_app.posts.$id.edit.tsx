@@ -21,6 +21,7 @@ const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().regex(/^[a-z0-9-]+$/, "Slug must contain only lowercase letters, numbers, and hyphens"),
   content: z.string().min(1, "Content is required"),
+  contentType: z.enum(["markdown", "html"]),
   excerpt: z.string().optional(),
   status: z.enum(["draft", "published"]),
   featuredImage: z.string().url().optional().or(z.literal("")),
@@ -54,6 +55,7 @@ function PostForm({ post, categories }: PostFormProps) {
           title: "",
           slug: "",
           content: "",
+          contentType: "markdown" as const,
           excerpt: "",
           status: "draft",
           featuredImage: "",
@@ -63,6 +65,7 @@ function PostForm({ post, categories }: PostFormProps) {
           title: post.title,
           slug: post.slug,
           content: post.content,
+          contentType: post.contentType,
           excerpt: post.excerpt ?? "",
           status: post.status,
           featuredImage: post.featuredImage ?? "",
@@ -71,6 +74,7 @@ function PostForm({ post, categories }: PostFormProps) {
   });
 
   const title = watch("title");
+  const contentType = watch("contentType");
 
   const generateSlug = () => {
     if (title) {
@@ -146,19 +150,28 @@ function PostForm({ post, categories }: PostFormProps) {
 
                 <div className="space-y-2">
                   <Label>Content</Label>
-                  <Controller
-                    name="content"
-                    control={control}
-                    render={({ field }) => (
-                      <MilkdownEditor
-                        key={post?.id ?? "new"}
-                        ref={editorRef}
-                        defaultValue={field.value}
-                        onChange={field.onChange}
-                        placeholder="开始写作..."
-                      />
-                    )}
-                  />
+                  {contentType === "markdown" ? (
+                    <Controller
+                      name="content"
+                      control={control}
+                      render={({ field }) => (
+                        <MilkdownEditor
+                          key={post?.id ?? "new"}
+                          ref={editorRef}
+                          defaultValue={field.value}
+                          onChange={field.onChange}
+                          placeholder="开始写作..."
+                        />
+                      )}
+                    />
+                  ) : (
+                    <Textarea
+                      {...register("content")}
+                      rows={20}
+                      placeholder="输入 HTML 内容..."
+                      className="font-mono text-sm"
+                    />
+                  )}
                   {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
                 </div>
 
@@ -189,6 +202,25 @@ function PostForm({ post, categories }: PostFormProps) {
                         <SelectContent>
                           <SelectItem value="draft">Draft</SelectItem>
                           <SelectItem value="published">Published</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Content Type</Label>
+                  <Controller
+                    name="contentType"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="markdown">Markdown</SelectItem>
+                          <SelectItem value="html">HTML</SelectItem>
                         </SelectContent>
                       </Select>
                     )}

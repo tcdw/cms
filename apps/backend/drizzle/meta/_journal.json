@@ -8,6 +8,13 @@
       "when": 1766591460808,
       "tag": "0000_abandoned_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1766768508239,
+      "tag": "0001_tidy_sunset_bain",
+      "breakpoints": true
     }
   ]
 }

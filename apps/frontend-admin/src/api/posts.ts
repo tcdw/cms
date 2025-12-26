@@ -1,4 +1,4 @@
-import type { APIResponse, PaginatedResponse, PostStatus } from "@onechu/schemas";
+import type { APIResponse, PaginatedResponse, PostContentType, PostStatus } from "@onechu/schemas";
 
 import { api } from "./client";
 
@@ -7,6 +7,7 @@ export interface Post {
   title: string;
   slug: string;
   content: string;
+  contentType: PostContentType;
   excerpt: string | null;
   status: PostStatus;
   featuredImage: string | null;
@@ -55,6 +56,7 @@ export interface CreatePostData {
   title: string;
   slug: string;
   content: string;
+  contentType?: PostContentType;
   excerpt?: string;
   status?: PostStatus;
   featuredImage?: string;
@@ -65,6 +67,7 @@ export interface UpdatePostData {
   title?: string;
   slug?: string;
   content?: string;
+  contentType?: PostContentType;
   excerpt?: string;
   status?: PostStatus;
   featuredImage?: string;

@@ -6,6 +6,9 @@ export type UserRole = z.infer<typeof userRoleSchema>;
 export const postStatusSchema = z.enum(["draft", "published"]);
 export type PostStatus = z.infer<typeof postStatusSchema>;
 
+export const postContentTypeSchema = z.enum(["markdown", "html"]);
+export type PostContentType = z.infer<typeof postContentTypeSchema>;
+
 export const authUserSchema = z.object({
   id: z.number().int(),
   username: z.string(),
@@ -96,6 +99,7 @@ export const insertPostSchema = z.object({
   title: z.string().min(1).max(200),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   content: z.string().min(1),
+  contentType: postContentTypeSchema.default("markdown"),
   excerpt: z.string().max(500).optional(),
   status: postStatusSchema.default("draft"),
   featuredImage: z.string().url().optional(),
