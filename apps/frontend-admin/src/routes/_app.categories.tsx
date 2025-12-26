@@ -177,15 +177,13 @@ function CategoriesPage() {
         <h1 className="text-3xl font-bold">Categories</h1>
         {isAdmin && (
           <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="size-4" />
             New Category
           </Button>
         )}
       </div>
 
-      {!isAdmin && (
-        <p className="text-muted-foreground">Only administrators can create, edit, or delete categories.</p>
-      )}
+      {!isAdmin && <p className="text-muted-foreground">Only administrators can create, edit, or delete categories.</p>}
 
       {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2">

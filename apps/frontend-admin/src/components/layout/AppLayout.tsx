@@ -52,7 +52,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 to={item.to}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -67,21 +69,19 @@ export function AppLayout({ children }: AppLayoutProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="w-full justify-start gap-2">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {user?.username?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{user?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                 </Avatar>
                 <span className="truncate">{user?.username || "User"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuItem disabled>
-                <User className="mr-2 h-4 w-4" />
+                <User className="size-4" />
                 {user?.email}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="size-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -91,7 +91,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <div className="container py-6">{children}</div>
+        <div className="px-6 py-6">{children}</div>
       </main>
     </div>
   );

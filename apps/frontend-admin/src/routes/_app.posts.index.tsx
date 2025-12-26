@@ -75,7 +75,7 @@ function PostsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Posts</h1>
         <Button onClick={() => navigate({ to: "/posts/new" })}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="size-4" />
           New Post
         </Button>
       </div>
@@ -93,7 +93,13 @@ function PostsPage() {
             Search
           </Button>
         </form>
-        <Select value={status} onValueChange={v => { setStatus(v); setPage(1); }}>
+        <Select
+          value={status}
+          onValueChange={v => {
+            setStatus(v);
+            setPage(1);
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -103,7 +109,13 @@ function PostsPage() {
             <SelectItem value="published">Published</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={category} onValueChange={v => { setCategory(v); setPage(1); }}>
+        <Select
+          value={category}
+          onValueChange={v => {
+            setCategory(v);
+            setPage(1);
+          }}
+        >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
