@@ -37,7 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 
 const categorySchema = z.object({
@@ -51,7 +51,6 @@ type CategoryForm = z.infer<typeof categorySchema>;
 function CategoriesPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const isAdmin = user?.role === "admin";
 
   const [page, setPage] = useState(1);
@@ -113,15 +112,15 @@ function CategoriesPage() {
     onSuccess: response => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["categories"] });
-        toast({ title: "Category created" });
+        toast.success("Category created");
         setIsCreateOpen(false);
         reset();
       } else {
-        toast({ title: "Failed to create category", description: response.message, variant: "destructive" });
+        toast.error("Failed to create category", { description: response.message });
       }
     },
     onError: () => {
-      toast({ title: "Failed to create category", variant: "destructive" });
+      toast.error("Failed to create category");
     },
   });
 
@@ -130,14 +129,14 @@ function CategoriesPage() {
     onSuccess: response => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["categories"] });
-        toast({ title: "Category updated" });
+        toast.success("Category updated");
         setEditingCategory(null);
       } else {
-        toast({ title: "Failed to update category", description: response.message, variant: "destructive" });
+        toast.error("Failed to update category", { description: response.message });
       }
     },
     onError: () => {
-      toast({ title: "Failed to update category", variant: "destructive" });
+      toast.error("Failed to update category");
     },
   });
 
@@ -146,14 +145,14 @@ function CategoriesPage() {
     onSuccess: response => {
       if (response.success) {
         queryClient.invalidateQueries({ queryKey: ["categories"] });
-        toast({ title: "Category deleted" });
+        toast.success("Category deleted");
       } else {
-        toast({ title: "Failed to delete category", description: response.message, variant: "destructive" });
+        toast.error("Failed to delete category", { description: response.message });
       }
       setDeleteId(null);
     },
     onError: () => {
-      toast({ title: "Failed to delete category", variant: "destructive" });
+      toast.error("Failed to delete category");
       setDeleteId(null);
     },
   });

@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/stores/authStore";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -22,7 +22,6 @@ type LoginForm = z.infer<typeof loginSchema>;
 function LoginPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const { toast } = useToast();
 
   const {
     register,
@@ -37,14 +36,14 @@ function LoginPage() {
     onSuccess: response => {
       if (response.success && response.data) {
         setAuth(response.data.token, response.data.user);
-        toast({ title: "Login successful", description: `Welcome back, ${response.data.user.username}!` });
+        toast.success("Login successful", { description: `Welcome back, ${response.data.user.username}!` });
         navigate({ to: "/dashboard" });
       } else {
-        toast({ title: "Login failed", description: response.message, variant: "destructive" });
+        toast.error("Login failed", { description: response.message });
       }
     },
     onError: () => {
-      toast({ title: "Login failed", description: "Invalid username or password", variant: "destructive" });
+      toast.error("Login failed", { description: "Invalid username or password" });
     },
   });
 

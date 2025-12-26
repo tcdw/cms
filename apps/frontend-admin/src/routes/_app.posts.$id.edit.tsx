@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -38,7 +38,6 @@ function PostForm({ post, categories }: PostFormProps) {
   const isNew = !post;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const editorRef = useRef<MilkdownEditorRef>(null);
 
   const {
@@ -94,18 +93,16 @@ function PostForm({ post, categories }: PostFormProps) {
         if (!isNew) {
           queryClient.invalidateQueries({ queryKey: ["post", String(post.id)] });
         }
-        toast({ title: isNew ? "Post created successfully" : "Post updated successfully" });
+        toast.success(isNew ? "Post created successfully" : "Post updated successfully");
         navigate({ to: "/posts" });
       } else {
-        toast({
-          title: isNew ? "Failed to create post" : "Failed to update post",
+        toast.error(isNew ? "Failed to create post" : "Failed to update post", {
           description: response.message,
-          variant: "destructive",
         });
       }
     },
     onError: () => {
-      toast({ title: isNew ? "Failed to create post" : "Failed to update post", variant: "destructive" });
+      toast.error(isNew ? "Failed to create post" : "Failed to update post");
     },
   });
 

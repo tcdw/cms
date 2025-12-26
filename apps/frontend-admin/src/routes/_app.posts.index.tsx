@@ -20,12 +20,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 function PostsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
@@ -56,11 +55,11 @@ function PostsPage() {
     mutationFn: deletePost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      toast({ title: "Post deleted" });
+      toast.success("Post deleted");
       setDeleteId(null);
     },
     onError: () => {
-      toast({ title: "Failed to delete post", variant: "destructive" });
+      toast.error("Failed to delete post");
     },
   });
 
