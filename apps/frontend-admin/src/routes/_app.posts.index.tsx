@@ -28,7 +28,8 @@ function PostsPage() {
   const { toast } = useToast();
 
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [status, setStatus] = useState<string>("all");
   const [category, setCategory] = useState<string>("all");
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -41,7 +42,7 @@ function PostsPage() {
   const params: PostsQueryParams = {
     page,
     limit: 10,
-    search: search || undefined,
+    search: searchQuery || undefined,
     status: status === "all" ? undefined : (status as "draft" | "published"),
     category: category === "all" ? undefined : Number(category),
   };
@@ -65,6 +66,7 @@ function PostsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSearchQuery(searchInput);
     setPage(1);
   };
 
@@ -83,8 +85,8 @@ function PostsPage() {
         <form onSubmit={handleSearch} className="flex gap-2 flex-1">
           <Input
             placeholder="Search posts..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             className="max-w-sm"
           />
           <Button type="submit" variant="secondary">

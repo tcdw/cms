@@ -220,7 +220,15 @@ export async function getPosts(request: IRequest): Promise<Response> {
     }
 
     if (query.search) {
-      conditions.push(or(like(posts.title, `%${query.search}%`), like(posts.content, `%${query.search}%`)));
+      // 按空格分隔关键词，过滤掉空字符串
+      const keywords = query.search.split(/\s+/).filter(k => k.length > 0);
+      if (keywords.length > 0) {
+        // 每个关键词生成一个条件（匹配 title 或 content），多个关键词用 OR 连接
+        const keywordConditions = keywords.map(keyword =>
+          or(like(posts.title, `%${keyword}%`), like(posts.content, `%${keyword}%`)),
+        );
+        conditions.push(or(...keywordConditions));
+      }
     }
 
     if (conditions.length > 0) {
