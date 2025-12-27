@@ -6,9 +6,10 @@ import { insertUserSchema } from "@onechu/schemas";
 
 import { db } from "../db";
 import { users } from "../db/schema";
-import type { APIResponse, JWTPayload } from "../types";
+import type { JWTPayload } from "../types";
 import { generateToken, hashPassword, verifyPassword } from "../utils/auth";
 import { isZodError } from "../utils/validation";
+import { createAPIResponse } from "../utils/wrapper";
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -40,29 +41,23 @@ export async function register(request: IRequest): Promise<Response> {
       const { password: _, ...userWithoutPassword } = user;
       void _; // suppress unused variable warning
 
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: true,
           message: "User registered successfully",
           data: userWithoutPassword,
-        } satisfies APIResponse),
-        {
-          status: 201,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 201 },
       );
     } catch (error) {
       if (error instanceof Error && error.message?.includes("UNIQUE constraint failed")) {
-        return new Response(
-          JSON.stringify({
+        return createAPIResponse(
+          {
             success: false,
             message: "Username or email already exists",
             errors: [error.message],
-          } satisfies APIResponse),
-          {
-            status: 409,
-            headers: { "Content-Type": "application/json" },
           },
+          { status: 409 },
         );
       }
       throw error;
@@ -71,29 +66,23 @@ export async function register(request: IRequest): Promise<Response> {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -106,15 +95,12 @@ export async function login(request: IRequest): Promise<Response> {
     const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
 
     if (!user || !(await verifyPassword(password, user.password))) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Invalid username or password",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
@@ -130,46 +116,35 @@ export async function login(request: IRequest): Promise<Response> {
     const { password: _pw, ...userWithoutPassword } = user;
     void _pw; // suppress unused variable warning
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Login successful",
-        data: {
-          user: userWithoutPassword,
-          token,
-        },
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
+    return createAPIResponse({
+      success: true,
+      message: "Login successful",
+      data: {
+        user: userWithoutPassword,
+        token,
       },
-    );
+    });
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }

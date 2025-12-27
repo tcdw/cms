@@ -7,8 +7,8 @@ import { insertCategorySchema } from "@onechu/schemas";
 import { db } from "../db";
 import { categories, postCategories, posts } from "../db/schema";
 import type { AuthenticatedRequest } from "../middleware/auth";
-import type { APIResponse, PaginatedResponse } from "../types";
 import { isZodError, validateSlug } from "../utils/validation";
+import { createAPIResponse, createPaginatedResponse } from "../utils/wrapper";
 
 const categoryUpdateSchema = insertCategorySchema.partial();
 
@@ -23,15 +23,12 @@ const categoriesQuerySchema = z.object({
 export async function createCategory(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user || request.user.role !== "admin") {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Admin access required",
-        } satisfies APIResponse),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 403 },
       );
     }
 
@@ -39,31 +36,25 @@ export async function createCategory(request: AuthenticatedRequest): Promise<Res
     const data = insertCategorySchema.parse(body);
 
     if (!validateSlug(data.slug)) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Invalid slug format",
           errors: ["Slug must contain only lowercase letters, numbers, and hyphens"],
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
     const [existingCategory] = await db.select().from(categories).where(eq(categories.slug, data.slug)).limit(1);
 
     if (existingCategory) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category slug already exists",
-        } satisfies APIResponse),
-        {
-          status: 409,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 409 },
       );
     }
 
@@ -76,44 +67,35 @@ export async function createCategory(request: AuthenticatedRequest): Promise<Res
       })
       .returning();
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: true,
         message: "Category created successfully",
         data: category,
-      } satisfies APIResponse),
-      {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 201 },
     );
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -167,48 +149,37 @@ export async function getCategories(request: IRequest): Promise<Response> {
 
     const totalPages = Math.ceil(totalCount / query.limit);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: categoriesList,
-        pagination: {
-          page: query.page,
-          limit: query.limit,
-          total: totalCount,
-          totalPages,
-        },
-      } satisfies PaginatedResponse),
-      {
-        headers: { "Content-Type": "application/json" },
+    return createPaginatedResponse({
+      success: true,
+      data: categoriesList,
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total: totalCount,
+        totalPages,
       },
-    );
+    });
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -218,15 +189,12 @@ export async function getCategory(request: IRequest): Promise<Response> {
     const id = request.params?.id;
 
     if (!id) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category ID is required",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -248,39 +216,28 @@ export async function getCategory(request: IRequest): Promise<Response> {
       .limit(1);
 
     if (!category) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Category retrieved successfully",
-        data: category,
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Category retrieved successfully",
+      data: category,
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -288,29 +245,23 @@ export async function getCategory(request: IRequest): Promise<Response> {
 export async function updateCategory(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user || request.user.role !== "admin") {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Admin access required",
-        } satisfies APIResponse),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 403 },
       );
     }
 
     const id = request.params?.id;
     if (!id) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category ID is required",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -318,16 +269,13 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
     const data = categoryUpdateSchema.parse(body);
 
     if (data.slug && !validateSlug(data.slug)) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Invalid slug format",
           errors: ["Slug must contain only lowercase letters, numbers, and hyphens"],
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -338,15 +286,12 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
       .limit(1);
 
     if (!existingCategory[0]) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
@@ -354,15 +299,12 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
       const [existingWithSlug] = await db.select().from(categories).where(eq(categories.slug, data.slug)).limit(1);
 
       if (existingWithSlug) {
-        return new Response(
-          JSON.stringify({
+        return createAPIResponse(
+          {
             success: false,
             message: "Category slug already exists",
-          } satisfies APIResponse),
-          {
-            status: 409,
-            headers: { "Content-Type": "application/json" },
           },
+          { status: 409 },
         );
       }
     }
@@ -376,43 +318,32 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
       .where(eq(categories.id, parseInt(id)))
       .returning();
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Category updated successfully",
-        data: updatedCategory,
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Category updated successfully",
+      data: updatedCategory,
+    });
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -420,29 +351,23 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
 export async function deleteCategory(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user || request.user.role !== "admin") {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Admin access required",
-        } satisfies APIResponse),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 403 },
       );
     }
 
     const id = request.params?.id;
     if (!id) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category ID is required",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -453,15 +378,12 @@ export async function deleteCategory(request: AuthenticatedRequest): Promise<Res
       .limit(1);
 
     if (!existingCategory[0]) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Category not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
@@ -471,40 +393,29 @@ export async function deleteCategory(request: AuthenticatedRequest): Promise<Res
       .where(eq(postCategories.categoryId, parseInt(id)));
 
     if (categoryPosts && categoryPosts.count > 0) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Cannot delete category with associated posts",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
     await db.delete(categories).where(eq(categories.id, parseInt(id)));
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Category deleted successfully",
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Category deleted successfully",
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }

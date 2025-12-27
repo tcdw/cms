@@ -5,10 +5,11 @@ import { z } from "zod";
 import { insertPostSchema } from "@onechu/schemas";
 
 import { db } from "../db";
-import { categories, postCategories, posts, users } from "../db/schema";
+import { categories, postCategories, posts, users } from "../db";
 import type { AuthenticatedRequest } from "../middleware/auth";
-import type { APIResponse, PaginatedResponse } from "../types";
+import type { PaginatedResponse } from "../types";
 import { isZodError, validateSlug } from "../utils/validation";
+import { createAPIResponse, createPaginatedResponse } from "../utils/wrapper";
 
 const postUpdateSchema = insertPostSchema.partial();
 
@@ -26,15 +27,12 @@ const postsQuerySchema = z.object({
 export async function createPost(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Authentication required",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
@@ -42,31 +40,25 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
     const data = insertPostSchema.parse(body);
 
     if (!validateSlug(data.slug)) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Invalid slug format",
           errors: ["Slug must contain only lowercase letters, numbers, and hyphens"],
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
     const [existingPost] = await db.select().from(posts).where(eq(posts.slug, data.slug)).limit(1);
 
     if (existingPost) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post slug already exists",
-        } satisfies APIResponse),
-        {
-          status: 409,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 409 },
       );
     }
 
@@ -75,15 +67,12 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       const validCategories = await db.select().from(categories).where(inArray(categories.id, categoryIds));
 
       if (validCategories.length !== categoryIds.length) {
-        return new Response(
-          JSON.stringify({
+        return createAPIResponse(
+          {
             success: false,
             message: "One or more categories not found",
-          } satisfies APIResponse),
-          {
-            status: 404,
-            headers: { "Content-Type": "application/json" },
           },
+          { status: 404 },
         );
       }
     }
@@ -154,44 +143,35 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       categories: postCategoriesList,
     };
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: true,
         message: "Post created successfully",
         data: postWithCategories,
-      } satisfies APIResponse),
-      {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 201 },
     );
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -287,48 +267,37 @@ export async function getPosts(request: IRequest): Promise<Response> {
 
     const totalPages = Math.ceil(totalCount / query.limit);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: postsList,
-        pagination: {
-          page: query.page,
-          limit: query.limit,
-          total: totalCount,
-          totalPages,
-        },
-      } satisfies PaginatedResponse),
-      {
-        headers: { "Content-Type": "application/json" },
+    return createPaginatedResponse({
+      success: true,
+      data: postsList,
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total: totalCount,
+        totalPages,
       },
-    );
+    } satisfies PaginatedResponse);
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -338,15 +307,12 @@ export async function getPost(request: IRequest): Promise<Response> {
     const id = request.params?.id;
 
     if (!id) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post ID is required",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -374,15 +340,12 @@ export async function getPost(request: IRequest): Promise<Response> {
       .limit(1);
 
     if (!post) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
@@ -401,43 +364,32 @@ export async function getPost(request: IRequest): Promise<Response> {
       categories: postCategoriesList,
     };
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Post retrieved successfully",
-        data: postWithCategories,
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Post retrieved successfully",
+      data: postWithCategories,
+    });
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -445,29 +397,23 @@ export async function getPost(request: IRequest): Promise<Response> {
 export async function updatePost(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Authentication required",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
     const id = request.params?.id;
     if (!id) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post ID is required",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -475,16 +421,13 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
     const data = postUpdateSchema.parse(body);
 
     if (data.slug && !validateSlug(data.slug)) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Invalid slug format",
           errors: ["Slug must contain only lowercase letters, numbers, and hyphens"],
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -495,28 +438,22 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       .limit(1);
 
     if (!existingPost[0]) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
     if (existingPost[0].authorId !== request.user.id && request.user.role !== "admin") {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "You can only edit your own posts",
-        } satisfies APIResponse),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 403 },
       );
     }
 
@@ -524,15 +461,12 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       const [existingWithSlug] = await db.select().from(posts).where(eq(posts.slug, data.slug)).limit(1);
 
       if (existingWithSlug) {
-        return new Response(
-          JSON.stringify({
+        return createAPIResponse(
+          {
             success: false,
             message: "Post slug already exists",
-          } satisfies APIResponse),
-          {
-            status: 409,
-            headers: { "Content-Type": "application/json" },
           },
+          { status: 409 },
         );
       }
     }
@@ -599,43 +533,32 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       categories: postCategoriesList,
     };
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Post updated successfully",
-        data: postWithCategories,
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Post updated successfully",
+      data: postWithCategories,
+    });
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -643,29 +566,23 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
 export async function deletePost(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Authentication required",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
     const id = request.params?.id;
     if (!id) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post ID is required",
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
@@ -676,28 +593,22 @@ export async function deletePost(request: AuthenticatedRequest): Promise<Respons
       .limit(1);
 
     if (!existingPost[0]) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Post not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
     if (existingPost[0].authorId !== request.user.id && request.user.role !== "admin") {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "You can only delete your own posts",
-        } satisfies APIResponse),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 403 },
       );
     }
 
@@ -705,26 +616,18 @@ export async function deletePost(request: AuthenticatedRequest): Promise<Respons
 
     await db.delete(posts).where(eq(posts.id, parseInt(id)));
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Post deleted successfully",
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Post deleted successfully",
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }

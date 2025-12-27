@@ -4,9 +4,9 @@ import { z } from "zod";
 import { db } from "../db";
 import { users } from "../db/schema";
 import type { AuthenticatedRequest } from "../middleware/auth";
-import type { APIResponse } from "../types";
 import { hashPassword, verifyPassword } from "../utils/auth";
 import { isZodError } from "../utils/validation";
+import { createAPIResponse } from "../utils/wrapper";
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
@@ -16,15 +16,12 @@ const changePasswordSchema = z.object({
 export async function changePassword(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Authentication required",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
@@ -34,15 +31,12 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
     const [user] = await db.select().from(users).where(eq(users.id, request.user.id)).limit(1);
 
     if (!user || !(await verifyPassword(currentPassword, user.password))) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Current password is incorrect",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
@@ -56,42 +50,31 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
       })
       .where(eq(users.id, request.user.id));
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Password changed successfully",
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Password changed successfully",
+    });
   } catch (error) {
     if (isZodError(error)) {
       const zodError = error as z.ZodError;
       const issues = zodError.issues || [];
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Validation error",
           errors: issues.map(e => e.message || JSON.stringify(e)),
-        } satisfies APIResponse),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 400 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
@@ -99,15 +82,12 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
 export async function getProfile(request: AuthenticatedRequest): Promise<Response> {
   try {
     if (!request.user) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "Authentication required",
-        } satisfies APIResponse),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 401 },
       );
     }
 
@@ -125,39 +105,28 @@ export async function getProfile(request: AuthenticatedRequest): Promise<Respons
       .limit(1);
 
     if (!user) {
-      return new Response(
-        JSON.stringify({
+      return createAPIResponse(
+        {
           success: false,
           message: "User not found",
-        } satisfies APIResponse),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
         },
+        { status: 404 },
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Profile retrieved successfully",
-        data: user,
-      } satisfies APIResponse),
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createAPIResponse({
+      success: true,
+      message: "Profile retrieved successfully",
+      data: user,
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({
+    return createAPIResponse(
+      {
         success: false,
         message: "Internal server error",
         errors: [error instanceof Error ? error.message : String(error)],
-      } satisfies APIResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
       },
+      { status: 500 },
     );
   }
 }
