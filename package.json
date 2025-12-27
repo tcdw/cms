@@ -6,5 +6,11 @@
     "apps/frontend-admin",
     "packages/*"
   ],
-  "scripts": {}
+  "dependencies": {
+    "prettier": "^3.7.4"
+  },
+  "scripts": {
+    "prettier": "prettier -c .",
+    "prettier:fix": "prettier -w --ignore-unknown ."
+  }
 }
