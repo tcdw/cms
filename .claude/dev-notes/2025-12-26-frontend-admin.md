@@ -8,29 +8,29 @@
 
 ## 技术栈
 
-| 类别 | 技术 |
-|------|------|
-| 框架 | React 19 + TypeScript |
-| 构建工具 | Rsbuild |
-| 路由 | TanStack Router (文件系统路由) |
-| 状态管理 | TanStack Query (服务端) + Zustand (客户端) |
-| UI 组件 | shadcn/ui (Radix UI + Tailwind CSS) |
-| 表单 | react-hook-form + zod |
-| HTTP 客户端 | ky |
-| Markdown 编辑器 | @uiw/react-md-editor |
+| 类别            | 技术                                       |
+| --------------- | ------------------------------------------ |
+| 框架            | React 19 + TypeScript                      |
+| 构建工具        | Rsbuild                                    |
+| 路由            | TanStack Router (文件系统路由)             |
+| 状态管理        | TanStack Query (服务端) + Zustand (客户端) |
+| UI 组件         | shadcn/ui (Radix UI + Tailwind CSS)        |
+| 表单            | react-hook-form + zod                      |
+| HTTP 客户端     | ky                                         |
+| Markdown 编辑器 | @uiw/react-md-editor                       |
 
 ## 实现的功能
 
 ### 页面
 
-| 路径 | 功能 |
-|------|------|
-| `/login` | 用户登录 |
-| `/dashboard` | 仪表盘（文章/分类统计） |
-| `/posts` | 文章列表（搜索、筛选、分页） |
-| `/posts/new` | 新建文章（Markdown 编辑器） |
-| `/posts/:id/edit` | 编辑文章 |
-| `/categories` | 分类管理（仅管理员可增删改） |
+| 路径              | 功能                         |
+| ----------------- | ---------------------------- |
+| `/login`          | 用户登录                     |
+| `/dashboard`      | 仪表盘（文章/分类统计）      |
+| `/posts`          | 文章列表（搜索、筛选、分页） |
+| `/posts/new`      | 新建文章（Markdown 编辑器）  |
+| `/posts/:id/edit` | 编辑文章                     |
+| `/categories`     | 分类管理（仅管理员可增删改） |
 
 ### 核心模块
 
@@ -75,6 +75,7 @@ apps/frontend-admin/src/
 **原因**: `_app.posts.tsx` 作为父路由没有 `<Outlet />` 渲染子路由
 
 **解决**:
+
 - 将列表页移到 `_app.posts.index.tsx`
 - 创建 `_app.posts.tsx` 只包含 `<Outlet />`
 
@@ -91,6 +92,7 @@ apps/frontend-admin/src/
 **原因**: API 客户端的 401 处理会触发 `window.location.href = "/login"`
 
 **解决**:
+
 - 排除 `/auth/` 端点的 401 重定向
 - 添加 `throwHttpErrors: false`
 
@@ -100,11 +102,11 @@ apps/frontend-admin/src/
 
 修改 `apps/backend/src/db/migrate.ts`，在数据库迁移时自动创建默认管理员：
 
-| 字段 | 值 |
-|------|-----|
-| 用户名 | `admin` |
-| 密码 | `admin123` |
-| 邮箱 | `admin@example.com` |
+| 字段   | 值                  |
+| ------ | ------------------- |
+| 用户名 | `admin`             |
+| 密码   | `admin123`          |
+| 邮箱   | `admin@example.com` |
 
 ## 启动方式
 

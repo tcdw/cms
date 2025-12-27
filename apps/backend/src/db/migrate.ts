@@ -23,11 +23,7 @@ async function main() {
   console.log("Migrations completed!");
 
   // Create default admin user if not exists
-  const [existingAdmin] = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, DEFAULT_ADMIN.username))
-    .limit(1);
+  const [existingAdmin] = await db.select().from(users).where(eq(users.username, DEFAULT_ADMIN.username)).limit(1);
 
   if (!existingAdmin) {
     console.log("Creating default admin user...");
