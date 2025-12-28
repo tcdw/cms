@@ -89,11 +89,11 @@ export async function createCategory(request: AuthenticatedRequest): Promise<Res
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -173,11 +173,11 @@ export async function getCategories(request: IRequest): Promise<Response> {
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -231,11 +231,11 @@ export async function getCategory(request: IRequest): Promise<Response> {
       data: category,
     });
   } catch (error) {
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -337,11 +337,11 @@ export async function updateCategory(request: AuthenticatedRequest): Promise<Res
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -409,11 +409,11 @@ export async function deleteCategory(request: AuthenticatedRequest): Promise<Res
       message: "Category deleted successfully",
     });
   } catch (error) {
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );

@@ -68,11 +68,11 @@ export async function changePassword(request: AuthenticatedRequest): Promise<Res
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -120,11 +120,11 @@ export async function getProfile(request: AuthenticatedRequest): Promise<Respons
       data: user,
     });
   } catch (error) {
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );

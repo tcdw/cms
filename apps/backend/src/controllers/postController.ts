@@ -165,11 +165,11 @@ export async function createPost(request: AuthenticatedRequest): Promise<Respons
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -291,11 +291,11 @@ export async function getPosts(request: IRequest): Promise<Response> {
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -383,11 +383,11 @@ export async function getPost(request: IRequest): Promise<Response> {
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -552,11 +552,11 @@ export async function updatePost(request: AuthenticatedRequest): Promise<Respons
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -621,11 +621,11 @@ export async function deletePost(request: AuthenticatedRequest): Promise<Respons
       message: "Post deleted successfully",
     });
   } catch (error) {
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );

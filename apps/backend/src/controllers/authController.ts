@@ -76,11 +76,11 @@ export async function register(request: IRequest): Promise<Response> {
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
@@ -138,11 +138,11 @@ export async function login(request: IRequest): Promise<Response> {
       );
     }
 
+    console.log(error); // TODO: Integrate with a logging library
     return createAPIResponse(
       {
         success: false,
         message: "Internal server error",
-        errors: [error instanceof Error ? error.message : String(error)],
       },
       { status: 500 },
     );
