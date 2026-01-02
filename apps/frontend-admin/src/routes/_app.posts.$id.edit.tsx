@@ -10,7 +10,6 @@ import { MilkdownEditor, type MilkdownEditorRef } from "@/components/ui/milkdown
 import { getCategories } from "@/api/categories";
 import { createPost, getPost, updatePost, type CreatePostData, type Post, type UpdatePostData } from "@/api/posts";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -118,156 +117,139 @@ function PostForm({ post, categories }: PostFormProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-8 pb-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{isNew ? "New Post" : "Edit Post"}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{isNew ? "New Post" : "Edit Post"}</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate({ to: "/posts" })}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit(onSubmit)} disabled={mutation.isPending}>
+            {mutation.isPending ? (isNew ? "Creating..." : "Saving...") : isNew ? "Create Post" : "Save Changes"}
+          </Button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Content</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input id="title" {...register("title")} />
-                  {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="slug">Slug</Label>
-                  <div className="flex gap-2">
-                    <Input id="slug" {...register("slug")} />
-                    <Button type="button" variant="outline" onClick={generateSlug}>
-                      Generate
-                    </Button>
-                  </div>
-                  {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Content</Label>
-                  {contentType === "markdown" ? (
-                    <Controller
-                      name="content"
-                      control={control}
-                      render={({ field }) => (
-                        <MilkdownEditor
-                          key={post?.id ?? "new"}
-                          ref={editorRef}
-                          defaultValue={field.value}
-                          onChange={field.onChange}
-                          placeholder="开始写作..."
-                        />
-                      )}
-                    />
-                  ) : (
-                    <Textarea
-                      {...register("content")}
-                      rows={20}
-                      placeholder="输入 HTML 内容..."
-                      className="font-mono text-sm"
-                    />
-                  )}
-                  {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="excerpt">Excerpt</Label>
-                  <Textarea id="excerpt" {...register("excerpt")} rows={3} />
-                </div>
-              </CardContent>
-            </Card>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" {...register("title")} placeholder="Post title" />
+            {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="published">Published</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Content Type</Label>
-                  <Controller
-                    name="contentType"
-                    control={control}
-                    render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="markdown">Markdown</SelectItem>
-                          <SelectItem value="html">HTML</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Controller
-                    name="categoryIds"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value?.[0]?.toString() || ""}
-                        onValueChange={val => field.onChange(val ? [Number(val)] : [])}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map(cat => (
-                            <SelectItem key={cat.id} value={cat.id.toString()}>
-                              {cat.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="featuredImage">Featured Image URL</Label>
-                  <Input id="featuredImage" {...register("featuredImage")} placeholder="https://..." />
-                </div>
-              </CardContent>
-            </Card>
-
+          <div className="space-y-2">
+            <Label htmlFor="slug">Slug</Label>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => navigate({ to: "/posts" })}>
-                Cancel
-              </Button>
-              <Button type="submit" className="flex-1" disabled={mutation.isPending}>
-                {mutation.isPending ? (isNew ? "Creating..." : "Saving...") : isNew ? "Create Post" : "Save Changes"}
+              <Input id="slug" {...register("slug")} placeholder="url-slug" />
+              <Button type="button" variant="outline" onClick={generateSlug}>
+                Generate
               </Button>
             </div>
+            {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
           </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="excerpt">Excerpt</Label>
+            <Textarea id="excerpt" {...register("excerpt")} rows={3} placeholder="Brief summary for SEO and previews" />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Content Type</Label>
+            <Controller
+              name="contentType"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="markdown">Markdown</SelectItem>
+                    <SelectItem value="html">HTML</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Controller
+              name="categoryIds"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value?.[0]?.toString() || ""}
+                  onValueChange={val => field.onChange(val ? [Number(val)] : [])}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="featuredImage">Featured Image URL</Label>
+            <Input id="featuredImage" {...register("featuredImage")} placeholder="https://..." />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Content</Label>
+          {contentType === "markdown" ? (
+            <Controller
+              name="content"
+              control={control}
+              render={({ field }) => (
+                <MilkdownEditor
+                  key={post?.id ?? "new"}
+                  ref={editorRef}
+                  defaultValue={field.value}
+                  onChange={field.onChange}
+                  placeholder="开始写作..."
+                />
+              )}
+            />
+          ) : (
+            <Textarea
+              {...register("content")}
+              rows={20}
+              placeholder="输入 HTML 内容..."
+              className="font-mono text-sm resize-y min-h-130"
+            />
+          )}
+          {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
         </div>
       </form>
     </div>
